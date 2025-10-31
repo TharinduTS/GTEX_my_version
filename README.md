@@ -175,6 +175,23 @@ cat gencode.v39.GRCh38.annotation.gtf ERCC92.patched.gtf > gencode.v39.GRCh38.an
 STAR index
 The STAR index should be built to match the sequencing read length, specified by the sjdbOverhang parameter. GTEx samples were sequenced using a 2x76 bp paired-end sequencing protocol, and the matching sjdbOverhang is 75.
 ```
+#!/bin/sh
+#SBATCH --job-name=fst
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --time=2:00:00
+#SBATCH --mem=30gb
+#SBATCH --output=abba.%J.out
+#SBATCH --error=abba.%J.err
+#SBATCH --account=def-ben
+
+#SBATCH --mail-user=premacht@mcmaster.ca
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=END
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-type=REQUEUE
+#SBATCH --mail-type=ALL
+
 module load star/2.7.10a
 mkdir -p star_index_oh75
 
@@ -186,4 +203,4 @@ STAR --runMode genomeGenerate \
 --runThreadN 4
 
 ```
-**STOPPED HERE WITHOUT FINISHING ABOVE **
+**STOPPED HERE **
