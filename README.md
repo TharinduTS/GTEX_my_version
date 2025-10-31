@@ -7,9 +7,15 @@ salloc --time=00:30:00 --mem=4G --account=def-ben
 module load apptainer
 apptainer pull gtex_rnaseq_V10.sif docker://broadinstitute/gtex_rnaseq:V10
 ```
+downloaded reference genome
+```
 wget ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_39/GRCh38.primary_assembly.genome.fa.gz
 gunzip GRCh38.primary_assembly.genome.fa.gz
 mv GRCh38.primary_assembly.genome.fa gtex_refs/
+```
 
+copied the python script to remove ALTs and etc
+
+Then ran python
 
 get https://storage.cloud.google.com/gtex-resources/STAR_genomes/star_index_v19_oh75.tar.gz
