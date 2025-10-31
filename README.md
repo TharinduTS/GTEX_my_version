@@ -15,7 +15,32 @@ mv GRCh38.primary_assembly.genome.fa gtex_refs/
 ```
 
 copied the python script to remove ALTs and etc
+```
+with open('GRCh38.primary_assembly.genome.fa', 'r') as fasta:
+    contigs = fasta.read()
+contigs = contigs.split('>')
+contig_ids = [i.split(' ', 1)[0] for i in contigs]
 
-Then ran python
+# exclude ALT, HLA and decoy contigs
+filtered_fasta = '>'.join([c for i,c in zip(contig_ids, contigs)
+    if not (i[-4:]=='_alt' or i[:3]=='HLA' or i[-6:]=='_decoy')])
 
-get https://storage.cloud.google.com/gtex-resources/STAR_genomes/star_index_v19_oh75.tar.gz
+with open('Homo_sapiens_assembly38_noALT_noHLA_noDecoy.fasta', 'w') as fasta:
+    fasta.write(filtered_fasta)
+```
+Then ran python vitual EN
+```
+module load python
+virtualenv --no-download ~/ENV
+source ~/ENV/bin/activate
+pip install --no-index --upgrade pip
+pip install numpy --no-index
+```
+and ran the script
+```
+python remove_ALT_HLA_Decoy.py
+```
+This creates "Homo_sapiens_assembly38_noALT_noHLA_noDecoy.fasta"
+
+
+
