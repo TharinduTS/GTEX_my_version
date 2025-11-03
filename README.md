@@ -237,4 +237,17 @@ rsem_reference/rsem_reference
 
 #Running the pipeline
 
+downloaded example file and moved it to samples
+```
+wget https://www.encodeproject.org/files/ENCFF069APB/@@download/ENCFF069APB.bam
+mkdir samples
+mv ENCFF069APB.bam samples/
+```
+Comvert BAM to FASTQ
+```BAM_to_FASTQ.sh
+module load apptainer
+apptainer run docker://broadinstitute/gtex_rnaseq     /bin/bash -c "rm -f read1_pipe read2_pipe read0_pipe && \
+    /src/run_SamToFastq.py  /scratch/premacht/guis_lab/gtex_refs/samples/ENCFF069APB.bam -p ENCFF069APB -o ./samples"
+```
+
 
