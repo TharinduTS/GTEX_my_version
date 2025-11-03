@@ -179,8 +179,8 @@ The STAR index should be built to match the sequencing read length, specified by
 #SBATCH --job-name=fst
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --time=2:00:00
-#SBATCH --mem=30gb
+#SBATCH --time=24:00:00
+#SBATCH --mem=64gb
 #SBATCH --output=abba.%J.out
 #SBATCH --error=abba.%J.err
 #SBATCH --account=def-ben
@@ -192,7 +192,7 @@ The STAR index should be built to match the sequencing read length, specified by
 #SBATCH --mail-type=REQUEUE
 #SBATCH --mail-type=ALL
 
-module load star/2.7.10a
+module load star
 mkdir -p star_index_oh75
 
 STAR --runMode genomeGenerate \
@@ -203,4 +203,38 @@ STAR --runMode genomeGenerate \
 --runThreadN 4
 
 ```
-**STOPPED HERE **
+RSEM index
+```
+#!/bin/sh
+#SBATCH --job-name=fst
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --time=24:00:00
+#SBATCH --mem=64gb
+#SBATCH --output=abba.%J.out
+#SBATCH --error=abba.%J.err
+#SBATCH --account=def-ben
+
+#SBATCH --mail-user=premacht@mcmaster.ca
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=END
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-type=REQUEUE
+#SBATCH --mail-type=ALL
+
+module load rsem
+module load star
+
+mkdir -p rsem_reference
+
+rsem-prepare-reference \
+--gtf gencode.v39.GRCh38.annotation.ERCC92.gtf \
+--star \
+--num-threads 4 \
+Homo_sapiens_assembly38_noALT_noHLA_noDecoy_ERCC.fasta \
+rsem_reference/rsem_reference
+```
+
+#Running the pipeline
+
+
