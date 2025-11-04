@@ -237,7 +237,7 @@ rsem_reference/rsem_reference
 
 #Running the pipeline
 
-downloaded example file and moved it to samples
+downloaded example file and moved it to samples- looking for a proper paired end reads
 ```
 wget https://www.encodeproject.org/files/ENCFF069APB/@@download/ENCFF069APB.bam
 mkdir samples
