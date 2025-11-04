@@ -172,37 +172,7 @@ Append to GENCODE GTF
 ```
 cat gencode.v39.GRCh38.annotation.gtf ERCC92.patched.gtf > gencode.v39.GRCh38.annotation.ERCC92.gtf
 ```
-STAR index
-The STAR index should be built to match the sequencing read length, specified by the sjdbOverhang parameter. GTEx samples were sequenced using a 2x76 bp paired-end sequencing protocol, and the matching sjdbOverhang is 75.
-```
-#!/bin/sh
-#SBATCH --job-name=fst
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1
-#SBATCH --time=24:00:00
-#SBATCH --mem=64gb
-#SBATCH --output=abba.%J.out
-#SBATCH --error=abba.%J.err
-#SBATCH --account=def-ben
 
-#SBATCH --mail-user=premacht@mcmaster.ca
-#SBATCH --mail-type=BEGIN
-#SBATCH --mail-type=END
-#SBATCH --mail-type=FAIL
-#SBATCH --mail-type=REQUEUE
-#SBATCH --mail-type=ALL
-
-module load star
-mkdir -p star_index_oh75
-
-STAR --runMode genomeGenerate \
---genomeDir star_index_oh75 \
---genomeFastaFiles Homo_sapiens_assembly38_noALT_noHLA_noDecoy_ERCC.fasta \
---sjdbGTFfile gencode.v39.GRCh38.annotation.ERCC92.gtf \
---sjdbOverhang 75 \
---runThreadN 4
-
-```
 RSEM index
 ```
 #!/bin/sh
@@ -235,19 +205,62 @@ Homo_sapiens_assembly38_noALT_noHLA_noDecoy_ERCC.fasta \
 rsem_reference/rsem_reference
 ```
 
-#Running the pipeline
+#*******Running the pipeline
 
-downloaded example file and moved it to samples- looking for a proper paired end reads
-```
-wget https://www.encodeproject.org/files/ENCFF069APB/@@download/ENCFF069APB.bam
-mkdir samples
-mv ENCFF069APB.bam samples/
-```
+I DOWNLOADED FASTQ FILES WITH SRA TOOLKIT. tHEREFORE SKIPPING THE BAM TO FASTQ CONVERSION BELOW
+#*****
 Comvert BAM to FASTQ
 ```BAM_to_FASTQ.sh
 module load apptainer
 apptainer run docker://broadinstitute/gtex_rnaseq     /bin/bash -c "rm -f read1_pipe read2_pipe read0_pipe && \
     /src/run_SamToFastq.py  /scratch/premacht/guis_lab/gtex_refs/samples/ENCFF069APB.bam -p ENCFF069APB -o ./samples"
 ```
+#****
+
+Download FASTQ with SRAtoolkit
+```
+module load sra-toolkit
+fastq-dump --split-files --gzip SRR1553531
+```
+then test the read length so we can build star index accordingly
+```
+zcat samples/SRR1553531_1.fastq.gz | awk 'NR%4==2' | head -n 100 | awk '{print length($0)}' | sort | uniq -c
+```
+Mine was 101. Therefore I am building Star_index setting sjdbOverhang to 100 (it should be the length-1)
+
+STAR index
+The STAR index should be built to match the sequencing read length, specified by the sjdbOverhang parameter. GTEx samples were sequenced using a 2x76 bp paired-end sequencing protocol, and the matching sjdbOverhang is 75.
+```
+#!/bin/sh
+#SBATCH --job-name=fst
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --time=24:00:00
+#SBATCH --mem=64gb
+#SBATCH --output=abba.%J.out
+#SBATCH --error=abba.%J.err
+#SBATCH --account=def-ben
+
+#SBATCH --mail-user=premacht@mcmaster.ca
+#SBATCH --mail-type=BEGIN
+#SBATCH --mail-type=END
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-type=REQUEUE
+#SBATCH --mail-type=ALL
+
+module load star
+mkdir -p star_index_oh75
+
+STAR --runMode genomeGenerate \
+--genomeDir star_index_oh75 \
+--genomeFastaFiles Homo_sapiens_assembly38_noALT_noHLA_noDecoy_ERCC.fasta \
+--sjdbGTFfile gencode.v39.GRCh38.annotation.ERCC92.gtf \
+--sjdbOverhang 75 \
+--runThreadN 4
+
+```
+
+
+
 
 
