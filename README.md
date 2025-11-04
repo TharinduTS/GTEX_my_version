@@ -229,8 +229,8 @@ zcat samples/SRR1553531_1.fastq.gz | awk 'NR%4==2' | head -n 100 | awk '{print l
 Mine was 101. Therefore I am building Star_index setting sjdbOverhang to 100 (it should be the length-1)
 
 STAR index
-The STAR index should be built to match the sequencing read length, specified by the sjdbOverhang parameter. GTEx samples were sequenced using a 2x76 bp paired-end sequencing protocol, and the matching sjdbOverhang is 75.
-CHANGE THE PLACES WITH 75 ACCORDINGLY      
+The STAR index should be built to match the sequencing read length, specified by the sjdbOverhang parameter. These samples were sequenced using a 2x101 bp paired-end sequencing protocol, and the matching sjdbOverhang is 100.
+CHANGE THE PLACES WITH 100 ACCORDINGLY      
 ```
 #!/bin/sh
 #SBATCH --job-name=fst
@@ -250,13 +250,13 @@ CHANGE THE PLACES WITH 75 ACCORDINGLY
 #SBATCH --mail-type=ALL
 
 module load star
-mkdir -p star_index_oh75
+mkdir -p star_index_oh100
 
 STAR --runMode genomeGenerate \
---genomeDir star_index_oh75 \
+--genomeDir star_index_oh100 \
 --genomeFastaFiles Homo_sapiens_assembly38_noALT_noHLA_noDecoy_ERCC.fasta \
 --sjdbGTFfile gencode.v39.GRCh38.annotation.ERCC92.gtf \
---sjdbOverhang 75 \
+--sjdbOverhang 100 \
 --runThreadN 4
 
 ```
