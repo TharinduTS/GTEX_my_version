@@ -230,6 +230,7 @@ Mine was 101. Therefore I am building Star_index setting sjdbOverhang to 100 (it
 
 STAR index
 The STAR index should be built to match the sequencing read length, specified by the sjdbOverhang parameter. GTEx samples were sequenced using a 2x76 bp paired-end sequencing protocol, and the matching sjdbOverhang is 75.
+CHANGE THE PLACES WITH 75 ACCORDINGLY      
 ```
 #!/bin/sh
 #SBATCH --job-name=fst
