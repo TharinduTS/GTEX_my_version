@@ -437,6 +437,7 @@ salloc --cpus-per-task=4 --mem=64G --time=2:00:00
 ```
 then run
 ```
+sample_id=SRR1553531
 apptainer run -B /scratch/premacht/guis_lab:/data /scratch/premacht/guis_lab/gtex_rnaseq_V10.sif     /bin/bash -c "python3 /data/run_STAR_edited.py \
         /data/gtex_refs/star_index_oh100 \
         /data/gtex_refs/samples/${sample_id}_1.fastq.gz \
