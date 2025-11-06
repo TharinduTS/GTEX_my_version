@@ -546,17 +546,28 @@ module load apptainer
 
 # Define paths
 base_dir=/scratch/premacht/guis_lab/gtex_refs
-samples_dir=${base_dir}/samples
+samples_dir=${base_dir}
 gct_dir=${base_dir}/rnaseqc_tpm_gcts
 
 # Step 1: Create target directory for GCTs
 mkdir -p ${gct_dir}
 
-# Step 2: Move all .gct files from samples/ to rnaseqc_tpm_gcts/
-mv ${samples_dir}/*.gct ${gct_dir}/
+# Step 2: Move all tpm.gct files from samples/ to rnaseqc_tpm_gcts/
+mv ${samples_dir}/*tpm.gct.gz ${gct_dir}/
+gunzip ${gct_dir}/*gz
 ```
 
-Then you can aggregate them when you have multiple samples
+Then you can aggregate them when you have multiple samples with something like
+```
+module load apptainer
+
+apptainer run \
+  -B ${base_dir}:/data \
+  /scratch/premacht/guis_lab/gtex_rnaseq_V10.sif \
+  /bin/bash -c "python3 /src/combine_GCTs.py \
+    /data/rnaseqc_tpm_gcts/*.gct \
+    /data/combined.rnaseqc_tpm.gct"
+```
 
 This will give you an output like following with
 ENSEMBLE ID    GENE NAME     TPM VALUES FOR EACH SAMPLE
