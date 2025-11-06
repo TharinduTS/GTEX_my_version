@@ -449,51 +449,52 @@ apptainer run -B /scratch/premacht/guis_lab:/data /scratch/premacht/guis_lab/gte
 #*****THIS IS OPTIONAL. BUT I AM TRYING IT
 getting picard and making mock BAM with fastqs
 downloading the bam file to sync it
-```
-module load sra-toolkit
-prefetch SRR1553531
-```
-convert to BAM
-```
-sam-dump SRR1553531 > SRR1553531.bam
-```
-then sync BAM
-```
-apptainer pull picard.sif docker://broadinstitute/picard
-module load apptainer
 
-sample_id=SRR1553531
-
-apptainer run -B /scratch/premacht/guis_lab/gtex_refs:/data /scratch/premacht/guis_lab/gtex_rnaseq_V10.sif \
-    /bin/bash -c "/src/run_bamsync.sh \
-        /data/samples/${sample_id}.bam \
-        /data/samples/star_out_${sample_id}.Aligned.sortedByCoord.out.patched.bam \
-        /data/samples/star_out_${sample_id}"
-
-```
-
-
-
-this BAM header was missing a line
-so had to add it
-```
-samtools view -H star_out_SRR1553531.Aligned.sortedByCoord.out.patched.bam > header.sam
-echo -e "@RG\tID:SRR15.S\tSM:SRR1553531\tPL:ILLUMINA" >> header.sam
-samtools reheader header.sam star_out_SRR1553531.Aligned.sortedByCoord.out.patched.bam > star_out_SRR1553531.Aligned.sortedByCoord.out.patched.fixed.bam
-```
-Mark duplicated
+sync BAM
 ```
 module load apptainer
 
 sample_id=SRR1553531
+path_to_data=/scratch/premacht/guis_lab/gtex_refs/samples
 
-apptainer run -B /scratch/premacht/guis_lab/gtex_refs:/data /scratch/premacht/guis_lab/gtex_rnaseq_V10.sif \
+ apptainer run   -B ${path_to_data}:/data   /scratch/premacht/guis_lab/gtex_rnaseq_V10.sif   /bin/bash -c "mkdir -p /data/star_out_${sample_id} && \
+    /src/run_bamsync.sh \
+      /data/${sample_id}.bam \
+      /data/star_out_${sample_id}/${sample_id}.Aligned.sortedByCoord.out.bam \
+      /data/star_out_${sample_id}"
+```
+*****Then I had to fix issues with BAM header because I made a mock bam. ONLY IF YOU GET ISSUES
+```
+module load apptainer
+
+path_to_data=/scratch/premacht/guis_lab/gtex_refs/samples
+sample_id=SRR1553531
+
+apptainer run \
+  -B ${path_to_data}:/data \
+  /scratch/premacht/guis_lab/gtex_rnaseq_V10.sif \
+  /bin/bash -c "java -jar /opt/picard-tools/picard.jar AddOrReplaceReadGroups \
+    I=/data/${sample_id}.noRG.bam \
+    O=/data/star_out_${sample_id}.Aligned.sortedByCoord.out.patched.bam \
+    RGID=${sample_id} RGLB=lib1 RGPL=ILLUMINA RGPU=unit1 RGSM=${sample_id} \
+    VALIDATION_STRINGENCY=SILENT CREATE_INDEX=true"
+
+```
+
+***** 
+
+Mark duplicates
+```
+module load apptainer
+
+path_to_data=/scratch/premacht/guis_lab/gtex_refs/samples
+
+apptainer run   -B ${path_to_data}:/data /scratch/premacht/guis_lab/gtex_rnaseq_V10.sif \
     /bin/bash -c "/src/run_MarkDuplicates.py \
-        /data/samples/star_out_${sample_id}.Aligned.sortedByCoord.out.patched.fixed.bam \
-        star_out_${sample_id}.Aligned.sortedByCoord.out.patched.md \
-        --output_dir /data/samples"
+        /data/star_out_${sample_id}.Aligned.sortedByCoord.out.patched.bam \
+        ${sample_id}.Aligned.sortedByCoord.out.patched.md \
+        --output_dir /data"
 ```
-
 RNA-SeQC v2 parses exon IDs to build its internal feature map. If the same exon ID appears more than once (even across different transcripts), it throws a fatal error.
 So I had to collapse annotation
 ```
@@ -506,112 +507,54 @@ python collapse_annotation.py \
     gencode.v39.GRCh38.annotation.gtf \
     gencode.v39.GRCh38.ERCC.genes.gtf
 ```
-
-Then you can  RNA-SeQC
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-sed 's/\(ENSE[0-9]*\)\.[0-9]\+/\1/g' gencode.v39.GRCh38.annotation.gtf > gencode.v39.GRCh38.annotation.noversion.gtf
+RNA-SeQc
 ```
-
-
-
-
-testing
-```
-#!/bin/sh
-#SBATCH --job-name=fst
-#SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1
-#SBATCH --time=24:00:00
-#SBATCH --mem=64gb
-#SBATCH --output=abba.%J.out
-#SBATCH --error=abba.%J.err
-#SBATCH --account=def-ben
-
-#SBATCH --mail-user=premacht@mcmaster.ca
-#SBATCH --mail-type=BEGIN
-#SBATCH --mail-type=END
-#SBATCH --mail-type=FAIL
-#SBATCH --mail-type=REQUEUE
-#SBATCH --mail-type=ALL
-
-
-module load apptainer
-
-apptainer run -B /scratch/premacht/guis_lab:/data /scratch/premacht/guis_lab/gtex_rnaseq_V10.sif \
-    STAR \
-    --runThreadN 4 \
-    --genomeDir /data/gtex_refs/star_index_oh100 \
-    --readFilesIn /data/gtex_refs/samples/SRR1553531_1.fastq.gz /data/gtex_refs/samples/SRR1553531_2.fastq.gz \
-    --readFilesCommand zcat \
-    --outFileNamePrefix /data/gtex_refs/samples/star_out_SRR1553531_ \
-    --outSAMtype BAM SortedByCoordinate \
-    --quantMode TranscriptomeSAM
-```
-
-```
-apptainer run -B /scratch/premacht/guis_lab:/data /scratch/premacht/guis_lab/gtex_rnaseq_V10.sif     /bin/bash -c "/src/run_bamsync.sh \
-        ${input_bam} \
-        /data/gtex_refs/samples/star_out_${sample_id}_Aligned.sortedByCoord.out.bam \
-        /data/gtex_refs/samples/star_out_${sample_id}"
-```
-```
-module load samtools
-
-samtools index /scratch/premacht/guis_lab/gtex_refs/samples/star_out_SRR1553531_Aligned.sortedByCoord.out.bam
-```
-
-
-
-
-
-
-
-
-
-
-
-
-
 module load apptainer
 
 sample_id=SRR1553531
+path_to_data=/scratch/premacht/guis_lab/gtex_refs
 
-apptainer run -B /scratch/premacht/guis_lab:/data /scratch/premacht/guis_lab/gtex_rnaseq_V10.sif \
-    /bin/bash -c "/src/run_STAR.py \
-        /data/gtex_refs/star_index_oh100 \
-        /data/gtex_refs/samples/${sample_id}_1.fastq.gz \
-        /data/gtex_refs/samples/${sample_id}_2.fastq.gz \
-        ${sample_id} \
-        --threads 4 \
-        --output_dir /tmp/star_out && mv /tmp/star_out /data/gtex_refs/samples/star_out_${sample_id}"
+apptainer run \
+  -B ${path_to_data}:/data \
+  /scratch/premacht/guis_lab/gtex_rnaseq_V10.sif \
+  /bin/bash -c "/src/run_rnaseqc.py \
+    /data/gencode.v39.GRCh38.ERCC.genes.gtf \
+    /data/samples/star_out_${sample_id}.Aligned.sortedByCoord.out.patched.md.bam \
+    ${sample_id} \
+    -o /data"
 
 ```
+RSEM transcript quantification
+```
+module load apptainer
+
+sample_id=SRR1553531
+path_to_data=/scratch/premacht/guis_lab/gtex_refs
+
+apptainer run \
+  -B ${path_to_data}:/data \
+  /scratch/premacht/guis_lab/gtex_rnaseq_V10.sif \
+  /bin/bash -c "/src/run_RSEM.py \
+    /data/rsem_reference \
+    /data/samples/star_out_${sample_id}/${sample_id}.Aligned.toTranscriptome.out.bam \
+    /data/${sample_id} \
+    --threads 4"
+```
+move all gct files to one directory
+```
+module load apptainer
+
+# Define paths
+base_dir=/scratch/premacht/guis_lab/gtex_refs
+samples_dir=${base_dir}/samples
+gct_dir=${base_dir}/rnaseqc_tpm_gcts
+
+# Step 1: Create target directory for GCTs
+mkdir -p ${gct_dir}
+
+# Step 2: Move all .gct files from samples/ to rnaseqc_tpm_gcts/
+mv ${samples_dir}/*.gct ${gct_dir}/
+```
+
+Then you can aggregate them when you have multiple samples
 
